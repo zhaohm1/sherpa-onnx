@@ -346,10 +346,10 @@ class OfflineTtsVitsImpl : public OfflineTtsImpl {
       frontend_ = std::make_unique<MeloTtsLexicon>(
           mgr, config_.model.vits.lexicon, config_.model.vits.tokens,
           model_->GetMetaData(), config_.model.debug);
-    } else if (meta_data.jieba) {
+    } else if (meta_data.jieba || meta_data.use_g2pw) {
       frontend_ = std::make_unique<CharacterLexicon>(
           mgr, config_.model.vits.lexicon, config_.model.vits.tokens,
-          config_.model.debug);
+          config_.model.debug, meta_data.use_g2pw);
     } else if (meta_data.is_melo_tts && meta_data.language == "English") {
       frontend_ = std::make_unique<MeloTtsLexicon>(
           mgr, config_.model.vits.lexicon, config_.model.vits.tokens,
@@ -388,10 +388,10 @@ class OfflineTtsVitsImpl : public OfflineTtsImpl {
       frontend_ = std::make_unique<MeloTtsLexicon>(
           config_.model.vits.lexicon, config_.model.vits.tokens,
           model_->GetMetaData(), config_.model.debug);
-    } else if (meta_data.jieba) {
+    } else if (meta_data.jieba || meta_data.use_g2pw) {
       frontend_ = std::make_unique<CharacterLexicon>(config_.model.vits.lexicon,
                                                      config_.model.vits.tokens,
-                                                     config_.model.debug);
+                                                     config_.model.debug, meta_data.use_g2pw);
     } else if ((meta_data.is_piper || meta_data.is_coqui ||
                 meta_data.is_icefall) &&
                !config_.model.vits.data_dir.empty()) {
