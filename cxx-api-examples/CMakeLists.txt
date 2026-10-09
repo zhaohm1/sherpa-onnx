@@ -45,6 +45,15 @@ target_link_libraries(omnilingual-asr-ctc-cxx-api sherpa-onnx-cxx-api)
 add_executable(nemo-canary-cxx-api ./nemo-canary-cxx-api.cc)
 target_link_libraries(nemo-canary-cxx-api sherpa-onnx-cxx-api)
 
+add_executable(profile-offline-paraformer-rknn-cxx-api
+               ./profile-offline-paraformer-rknn-cxx-api.cc)
+target_link_libraries(profile-offline-paraformer-rknn-cxx-api
+                      sherpa-onnx-cxx-api)
+
+add_executable(profile-online-zipformer-rknn-cxx-api
+               ./profile-online-zipformer-rknn-cxx-api.cc)
+target_link_libraries(profile-online-zipformer-rknn-cxx-api
+                      sherpa-onnx-cxx-api)
 add_executable(offline-punctuation-cxx-api ./offline-punctuation-cxx-api.cc)
 target_link_libraries(offline-punctuation-cxx-api sherpa-onnx-cxx-api)
 

@@ -8,6 +8,8 @@
 #include <vector>
 
 #include "sherpa-onnx/csrc/features.h"
+#include "sherpa-onnx/csrc/profiling.h"
+#include "sherpa-onnx/csrc/text-utils.h"
 #include "sherpa-onnx/csrc/transducer-keyword-decoder.h"
 
 namespace sherpa_onnx {
@@ -19,6 +21,7 @@ class OnlineStream::Impl {
       : feat_extractor_(config), context_graph_(std::move(context_graph)) {}
 
   void AcceptWaveform(int32_t sampling_rate, const float *waveform, int32_t n) {
+    SHERPA_ONNX_PROFILE_SCOPE("stream.accept_waveform_feature_pipeline");
     std::lock_guard<std::mutex> lock(mutex_);
     feat_extractor_.AcceptWaveform(sampling_rate, waveform, n);
   }

@@ -10,6 +10,7 @@
 
 #include "sherpa-onnx/csrc/macros.h"
 #include "sherpa-onnx/csrc/onnx-utils.h"
+#include "sherpa-onnx/csrc/profiling.h"
 
 namespace sherpa_onnx {
 
@@ -74,6 +75,7 @@ void OnlineTransducerGreedySearchDecoder::StripLeadingBlanks(
 void OnlineTransducerGreedySearchDecoder::Decode(
     Ort::Value encoder_out,
     std::vector<OnlineTransducerDecoderResult> *result) {
+  SHERPA_ONNX_PROFILE_SCOPE("online.transducer.greedy_search_decode");
   std::vector<int64_t> encoder_out_shape =
       encoder_out.GetTensorTypeAndShapeInfo().GetShape();
 
