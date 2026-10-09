@@ -25,6 +25,7 @@
 #include "sherpa-onnx/csrc/online-transducer-model.h"
 #include "sherpa-onnx/csrc/online-transducer-modified-beam-search-decoder.h"
 #include "sherpa-onnx/csrc/onnx-utils.h"
+#include "sherpa-onnx/csrc/profiling.h"
 #include "sherpa-onnx/csrc/symbol-table.h"
 #include "sherpa-onnx/csrc/text-utils.h"
 #include "sherpa-onnx/csrc/utils.h"
@@ -286,6 +287,9 @@ class OnlineRecognizerTransducerImpl : public OnlineRecognizerImpl {
   }
 
   void DecodeStreams(OnlineStream **ss, int32_t n) const override {
+    SHERPA_ONNX_PROFILE_SCOPE("online.transducer.decode_streams_total");
+    SHERPA_ONNX_PROFILE_TIMER(prepare_timer,
+                              "online.transducer.batch_prepare");
     int32_t chunk_size = model_->ChunkSize();
     int32_t chunk_shift = model_->ChunkShift();
 
@@ -339,6 +343,7 @@ class OnlineRecognizerTransducerImpl : public OnlineRecognizerImpl {
         processed_frames_shape.data(), processed_frames_shape.size());
 
     auto states = model_->StackStates(states_vec);
+    prepare_timer.Stop();
 
     auto pair = model_->RunEncoder(std::move(x), std::move(states),
                                    std::move(processed_frames));
