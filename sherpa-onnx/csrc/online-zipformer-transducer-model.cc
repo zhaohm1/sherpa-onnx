@@ -27,6 +27,7 @@
 #include "sherpa-onnx/csrc/macros.h"
 #include "sherpa-onnx/csrc/online-transducer-decoder.h"
 #include "sherpa-onnx/csrc/onnx-utils.h"
+#include "sherpa-onnx/csrc/profiling.h"
 #include "sherpa-onnx/csrc/session.h"
 #include "sherpa-onnx/csrc/text-utils.h"
 #include "sherpa-onnx/csrc/unbind.h"
@@ -462,6 +463,7 @@ std::pair<Ort::Value, std::vector<Ort::Value>>
 OnlineZipformerTransducerModel::RunEncoder(Ort::Value features,
                                            std::vector<Ort::Value> states,
                                            Ort::Value /* processed_frames */) {
+  SHERPA_ONNX_PROFILE_SCOPE("online.zipformer.encoder_session");
   std::vector<Ort::Value> encoder_inputs;
   encoder_inputs.reserve(1 + states.size());
 
@@ -487,6 +489,7 @@ OnlineZipformerTransducerModel::RunEncoder(Ort::Value features,
 
 Ort::Value OnlineZipformerTransducerModel::RunDecoder(
     Ort::Value decoder_input) {
+  SHERPA_ONNX_PROFILE_SCOPE("online.zipformer.decoder_session");
   auto decoder_out = decoder_sess_->Run(
       {}, decoder_input_names_ptr_.data(), &decoder_input, 1,
       decoder_output_names_ptr_.data(), decoder_output_names_ptr_.size());
@@ -495,6 +498,7 @@ Ort::Value OnlineZipformerTransducerModel::RunDecoder(
 
 Ort::Value OnlineZipformerTransducerModel::RunJoiner(Ort::Value encoder_out,
                                                      Ort::Value decoder_out) {
+  SHERPA_ONNX_PROFILE_SCOPE("online.zipformer.joiner_session");
   std::array<Ort::Value, 2> joiner_input = {std::move(encoder_out),
                                             std::move(decoder_out)};
   auto logit =

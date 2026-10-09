@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "sherpa-onnx/csrc/macros.h"
+#include "sherpa-onnx/csrc/profiling.h"
 
 namespace sherpa_onnx {
 
@@ -36,6 +37,7 @@ void OnlineTransducerGreedySearchDecoderRknn::StripLeadingBlanks(
 void OnlineTransducerGreedySearchDecoderRknn::Decode(
     std::vector<float> encoder_out,
     OnlineTransducerDecoderResultRknn *result) const {
+  SHERPA_ONNX_PROFILE_SCOPE("rknn.zipformer.greedy_search_decode");
   auto &r = result[0];
   auto attr = model_->GetEncoderOutAttr();
   int32_t num_frames = attr.dims[1];

@@ -11,6 +11,7 @@
 
 #include "sherpa-onnx/csrc/log.h"
 #include "sherpa-onnx/csrc/onnx-utils.h"
+#include "sherpa-onnx/csrc/profiling.h"
 
 namespace sherpa_onnx {
 
@@ -77,6 +78,7 @@ void OnlineTransducerModifiedBeamSearchDecoder::Decode(
 void OnlineTransducerModifiedBeamSearchDecoder::Decode(
     Ort::Value encoder_out, OnlineStream **ss,
     std::vector<OnlineTransducerDecoderResult> *result) {
+  SHERPA_ONNX_PROFILE_SCOPE("online.transducer.modified_beam_search_decode");
   std::vector<int64_t> encoder_out_shape =
       encoder_out.GetTensorTypeAndShapeInfo().GetShape();
 

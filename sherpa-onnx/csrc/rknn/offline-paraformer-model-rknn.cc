@@ -25,6 +25,7 @@
 #include "sherpa-onnx/csrc/rknn/context-blocking-queue-rknn.h"
 #include "sherpa-onnx/csrc/rknn/macros.h"
 #include "sherpa-onnx/csrc/rknn/utils.h"
+#include "sherpa-onnx/csrc/profiling.h"
 #include "sherpa-onnx/csrc/text-utils.h"
 
 namespace sherpa_onnx {
@@ -104,15 +105,28 @@ class OfflineParaformerModelRknn::Impl {
   }
 
   std::vector<float> Run(std::vector<float> features) {
-    std::vector<float> encoder_out = RunEncoder(features);
+    SHERPA_ONNX_PROFILE_SCOPE("rknn.paraformer.model_forward_total");
+    std::vector<float> encoder_out;
+    {
+      SHERPA_ONNX_PROFILE_SCOPE("rknn.paraformer.encoder_total");
+      encoder_out = RunEncoder(features);
+    }
     if (encoder_out.empty()) {
       return {};
     }
 
-    std::vector<float> alphas = RunPredictor(encoder_out);
+    std::vector<float> alphas;
+    {
+      SHERPA_ONNX_PROFILE_SCOPE("rknn.paraformer.predictor_total");
+      alphas = RunPredictor(encoder_out);
+    }
 
-    std::vector<float> acoustic_embedding =
-        ComputeAcousticEmbedding(encoder_out, alphas, encoder_out_dim_);
+    std::vector<float> acoustic_embedding;
+    {
+      SHERPA_ONNX_PROFILE_SCOPE("rknn.paraformer.acoustic_embedding");
+      acoustic_embedding =
+          ComputeAcousticEmbedding(encoder_out, alphas, encoder_out_dim_);
+    }
     if (acoustic_embedding.empty()) {
       if (config_.debug) {
         SHERPA_ONNX_LOGE("No speech found in the input audio");
@@ -125,6 +139,7 @@ class OfflineParaformerModelRknn::Impl {
 
     acoustic_embedding.resize(encoder_out.size());
 
+    SHERPA_ONNX_PROFILE_SCOPE("rknn.paraformer.decoder_total");
     return RunDecoder(std::move(encoder_out), std::move(acoustic_embedding),
                       num_tokens);
   }
@@ -155,15 +170,29 @@ class OfflineParaformerModelRknn::Impl {
     outputs[0].size = out.size() * sizeof(float);
     outputs[0].buf = reinterpret_cast<void *>(out.data());
 
-    rknn_context ctx = encoder_ctx_queue_->Take();
+    rknn_context ctx;
+    {
+      SHERPA_ONNX_PROFILE_SCOPE("rknn.paraformer.encoder_context_wait");
+      ctx = encoder_ctx_queue_->Take();
+    }
 
-    auto ret = rknn_inputs_set(ctx, inputs.size(), inputs.data());
+    int ret;
+    {
+      SHERPA_ONNX_PROFILE_SCOPE("rknn.paraformer.encoder_inputs_set");
+      ret = rknn_inputs_set(ctx, inputs.size(), inputs.data());
+    }
     SHERPA_ONNX_RKNN_CHECK(ret, "Failed to set encoder inputs");
 
-    ret = rknn_run(ctx, nullptr);
+    {
+      SHERPA_ONNX_PROFILE_SCOPE("rknn.paraformer.encoder_run");
+      ret = rknn_run(ctx, nullptr);
+    }
     SHERPA_ONNX_RKNN_CHECK(ret, "Failed to run the encoder model");
 
-    ret = rknn_outputs_get(ctx, outputs.size(), outputs.data(), nullptr);
+    {
+      SHERPA_ONNX_PROFILE_SCOPE("rknn.paraformer.encoder_outputs_get");
+      ret = rknn_outputs_get(ctx, outputs.size(), outputs.data(), nullptr);
+    }
     SHERPA_ONNX_RKNN_CHECK(ret, "Failed to get encoder output");
 
     encoder_ctx_queue_->Put(ctx);
@@ -190,15 +219,29 @@ class OfflineParaformerModelRknn::Impl {
     outputs[0].size = out.size() * sizeof(float);
     outputs[0].buf = reinterpret_cast<void *>(out.data());
 
-    rknn_context ctx = predictor_ctx_queue_->Take();
+    rknn_context ctx;
+    {
+      SHERPA_ONNX_PROFILE_SCOPE("rknn.paraformer.predictor_context_wait");
+      ctx = predictor_ctx_queue_->Take();
+    }
 
-    auto ret = rknn_inputs_set(ctx, inputs.size(), inputs.data());
+    int ret;
+    {
+      SHERPA_ONNX_PROFILE_SCOPE("rknn.paraformer.predictor_inputs_set");
+      ret = rknn_inputs_set(ctx, inputs.size(), inputs.data());
+    }
     SHERPA_ONNX_RKNN_CHECK(ret, "Failed to set predictor inputs");
 
-    ret = rknn_run(ctx, nullptr);
+    {
+      SHERPA_ONNX_PROFILE_SCOPE("rknn.paraformer.predictor_run");
+      ret = rknn_run(ctx, nullptr);
+    }
     SHERPA_ONNX_RKNN_CHECK(ret, "Failed to run the predictor model");
 
-    ret = rknn_outputs_get(ctx, outputs.size(), outputs.data(), nullptr);
+    {
+      SHERPA_ONNX_PROFILE_SCOPE("rknn.paraformer.predictor_outputs_get");
+      ret = rknn_outputs_get(ctx, outputs.size(), outputs.data(), nullptr);
+    }
     SHERPA_ONNX_RKNN_CHECK(ret, "Failed to get predictor output");
 
     predictor_ctx_queue_->Put(ctx);
@@ -243,15 +286,29 @@ class OfflineParaformerModelRknn::Impl {
     outputs[0].size = out.size() * sizeof(float);
     outputs[0].buf = reinterpret_cast<void *>(out.data());
 
-    rknn_context ctx = decoder_ctx_queue_->Take();
+    rknn_context ctx;
+    {
+      SHERPA_ONNX_PROFILE_SCOPE("rknn.paraformer.decoder_context_wait");
+      ctx = decoder_ctx_queue_->Take();
+    }
 
-    auto ret = rknn_inputs_set(ctx, inputs.size(), inputs.data());
+    int ret;
+    {
+      SHERPA_ONNX_PROFILE_SCOPE("rknn.paraformer.decoder_inputs_set");
+      ret = rknn_inputs_set(ctx, inputs.size(), inputs.data());
+    }
     SHERPA_ONNX_RKNN_CHECK(ret, "Failed to set decoder inputs");
 
-    ret = rknn_run(ctx, nullptr);
+    {
+      SHERPA_ONNX_PROFILE_SCOPE("rknn.paraformer.decoder_run");
+      ret = rknn_run(ctx, nullptr);
+    }
     SHERPA_ONNX_RKNN_CHECK(ret, "Failed to run the decoder model");
 
-    ret = rknn_outputs_get(ctx, outputs.size(), outputs.data(), nullptr);
+    {
+      SHERPA_ONNX_PROFILE_SCOPE("rknn.paraformer.decoder_outputs_get");
+      ret = rknn_outputs_get(ctx, outputs.size(), outputs.data(), nullptr);
+    }
     SHERPA_ONNX_RKNN_CHECK(ret, "Failed to get decoder output");
 
     decoder_ctx_queue_->Put(ctx);

@@ -24,6 +24,7 @@
 #include "sherpa-onnx/csrc/rknn/context-blocking-queue-rknn.h"
 #include "sherpa-onnx/csrc/rknn/macros.h"
 #include "sherpa-onnx/csrc/rknn/utils.h"
+#include "sherpa-onnx/csrc/profiling.h"
 #include "sherpa-onnx/csrc/text-utils.h"
 
 namespace sherpa_onnx {
@@ -116,6 +117,7 @@ class OnlineZipformerTransducerModelRknn::Impl {
 
   std::pair<std::vector<float>, std::vector<std::vector<uint8_t>>> RunEncoder(
       std::vector<float> features, std::vector<std::vector<uint8_t>> states) {
+    SHERPA_ONNX_PROFILE_SCOPE("rknn.zipformer.encoder_total");
     std::vector<rknn_input> inputs(encoder_input_attrs_.size());
 
     for (int32_t i = 0; i < static_cast<int32_t>(inputs.size()); ++i) {
@@ -175,17 +177,31 @@ class OnlineZipformerTransducerModelRknn::Impl {
       }
     }
 
-    rknn_context encoder_ctx = encoder_ctx_queue_->Take();
+    rknn_context encoder_ctx;
+    {
+      SHERPA_ONNX_PROFILE_SCOPE("rknn.zipformer.encoder_context_wait");
+      encoder_ctx = encoder_ctx_queue_->Take();
+    }
 
-    auto ret = rknn_inputs_set(encoder_ctx, inputs.size(), inputs.data());
+    int ret;
+    {
+      SHERPA_ONNX_PROFILE_SCOPE("rknn.zipformer.encoder_inputs_set");
+      ret = rknn_inputs_set(encoder_ctx, inputs.size(), inputs.data());
+    }
     SHERPA_ONNX_RKNN_CHECK(ret, "Failed to set encoder inputs");
 
-    ret = rknn_run(encoder_ctx, nullptr);
+    {
+      SHERPA_ONNX_PROFILE_SCOPE("rknn.zipformer.encoder_run");
+      ret = rknn_run(encoder_ctx, nullptr);
+    }
 
     SHERPA_ONNX_RKNN_CHECK(ret, "Failed to run encoder");
 
-    ret =
-        rknn_outputs_get(encoder_ctx, outputs.size(), outputs.data(), nullptr);
+    {
+      SHERPA_ONNX_PROFILE_SCOPE("rknn.zipformer.encoder_outputs_get");
+      ret = rknn_outputs_get(encoder_ctx, outputs.size(), outputs.data(),
+                             nullptr);
+    }
     SHERPA_ONNX_RKNN_CHECK(ret, "Failed to get encoder output");
 
     for (int32_t i = 0; i < next_states.size(); ++i) {
@@ -212,6 +228,7 @@ class OnlineZipformerTransducerModelRknn::Impl {
   }
 
   std::vector<float> RunDecoder(std::vector<int64_t> decoder_input) {
+    SHERPA_ONNX_PROFILE_SCOPE("rknn.zipformer.decoder_total");
     auto &attr = decoder_input_attrs_[0];
     rknn_input input;
 
@@ -229,15 +246,29 @@ class OnlineZipformerTransducerModelRknn::Impl {
     output.size = decoder_out.size() * sizeof(float);
     output.buf = decoder_out.data();
 
-    rknn_context decoder_ctx = decoder_ctx_queue_->Take();
+    rknn_context decoder_ctx;
+    {
+      SHERPA_ONNX_PROFILE_SCOPE("rknn.zipformer.decoder_context_wait");
+      decoder_ctx = decoder_ctx_queue_->Take();
+    }
 
-    auto ret = rknn_inputs_set(decoder_ctx, 1, &input);
+    int ret;
+    {
+      SHERPA_ONNX_PROFILE_SCOPE("rknn.zipformer.decoder_inputs_set");
+      ret = rknn_inputs_set(decoder_ctx, 1, &input);
+    }
     SHERPA_ONNX_RKNN_CHECK(ret, "Failed to set decoder inputs");
 
-    ret = rknn_run(decoder_ctx, nullptr);
+    {
+      SHERPA_ONNX_PROFILE_SCOPE("rknn.zipformer.decoder_run");
+      ret = rknn_run(decoder_ctx, nullptr);
+    }
     SHERPA_ONNX_RKNN_CHECK(ret, "Failed to run decoder");
 
-    ret = rknn_outputs_get(decoder_ctx, 1, &output, nullptr);
+    {
+      SHERPA_ONNX_PROFILE_SCOPE("rknn.zipformer.decoder_outputs_get");
+      ret = rknn_outputs_get(decoder_ctx, 1, &output, nullptr);
+    }
     SHERPA_ONNX_RKNN_CHECK(ret, "Failed to get decoder output");
 
     decoder_ctx_queue_->Put(decoder_ctx);
@@ -247,6 +278,7 @@ class OnlineZipformerTransducerModelRknn::Impl {
 
   std::vector<float> RunJoiner(const float *encoder_out,
                                const float *decoder_out) {
+    SHERPA_ONNX_PROFILE_SCOPE("rknn.zipformer.joiner_total");
     std::vector<rknn_input> inputs(2);
     inputs[0].index = 0;
     inputs[0].type = RKNN_TENSOR_FLOAT32;
@@ -268,15 +300,29 @@ class OnlineZipformerTransducerModelRknn::Impl {
     output.size = joiner_out.size() * sizeof(float);
     output.buf = joiner_out.data();
 
-    rknn_context joiner_ctx = joiner_ctx_queue_->Take();
+    rknn_context joiner_ctx;
+    {
+      SHERPA_ONNX_PROFILE_SCOPE("rknn.zipformer.joiner_context_wait");
+      joiner_ctx = joiner_ctx_queue_->Take();
+    }
 
-    auto ret = rknn_inputs_set(joiner_ctx, inputs.size(), inputs.data());
+    int ret;
+    {
+      SHERPA_ONNX_PROFILE_SCOPE("rknn.zipformer.joiner_inputs_set");
+      ret = rknn_inputs_set(joiner_ctx, inputs.size(), inputs.data());
+    }
     SHERPA_ONNX_RKNN_CHECK(ret, "Failed to set joiner inputs");
 
-    ret = rknn_run(joiner_ctx, nullptr);
+    {
+      SHERPA_ONNX_PROFILE_SCOPE("rknn.zipformer.joiner_run");
+      ret = rknn_run(joiner_ctx, nullptr);
+    }
     SHERPA_ONNX_RKNN_CHECK(ret, "Failed to run joiner");
 
-    ret = rknn_outputs_get(joiner_ctx, 1, &output, nullptr);
+    {
+      SHERPA_ONNX_PROFILE_SCOPE("rknn.zipformer.joiner_outputs_get");
+      ret = rknn_outputs_get(joiner_ctx, 1, &output, nullptr);
+    }
     SHERPA_ONNX_RKNN_CHECK(ret, "Failed to get joiner output");
 
     joiner_ctx_queue_->Put(joiner_ctx);

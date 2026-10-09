@@ -15,6 +15,7 @@
 #include "sherpa-onnx/csrc/macros.h"
 #include "sherpa-onnx/csrc/online-recognizer-impl.h"
 #include "sherpa-onnx/csrc/online-recognizer.h"
+#include "sherpa-onnx/csrc/profiling.h"
 #include "sherpa-onnx/csrc/rknn/online-stream-rknn.h"
 #include "sherpa-onnx/csrc/rknn/online-transducer-decoder-rknn.h"
 #include "sherpa-onnx/csrc/rknn/online-transducer-greedy-search-decoder-rknn.h"
@@ -236,6 +237,7 @@ class OnlineRecognizerTransducerRknnImpl : public OnlineRecognizerImpl {
 
  private:
   void DecodeStream(OnlineStreamRknn *s) const {
+    SHERPA_ONNX_PROFILE_SCOPE("rknn.zipformer.decode_chunk_total");
     int32_t chunk_size = model_->ChunkSize();
     int32_t chunk_shift = model_->ChunkShift();
 
