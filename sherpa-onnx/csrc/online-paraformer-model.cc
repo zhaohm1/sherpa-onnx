@@ -3,6 +3,7 @@
 // Copyright (c)  2022-2023  Xiaomi Corporation
 
 #include "sherpa-onnx/csrc/online-paraformer-model.h"
+#include "sherpa-onnx/csrc/profiling.h"
 
 #include <algorithm>
 #include <cmath>
@@ -223,6 +224,7 @@ OnlineParaformerModel::~OnlineParaformerModel() = default;
 
 std::vector<Ort::Value> OnlineParaformerModel::ForwardEncoder(
     Ort::Value features, Ort::Value features_length) const {
+  SHERPA_ONNX_PROFILE_SCOPE("online.paraformer.encoder_session");
   return impl_->ForwardEncoder(std::move(features), std::move(features_length));
 }
 
@@ -230,6 +232,7 @@ std::vector<Ort::Value> OnlineParaformerModel::ForwardDecoder(
     Ort::Value encoder_out, Ort::Value encoder_out_length,
     Ort::Value acoustic_embedding, Ort::Value acoustic_embedding_length,
     std::vector<Ort::Value> states) const {
+  SHERPA_ONNX_PROFILE_SCOPE("online.paraformer.decoder_session");
   return impl_->ForwardDecoder(
       std::move(encoder_out), std::move(encoder_out_length),
       std::move(acoustic_embedding), std::move(acoustic_embedding_length),

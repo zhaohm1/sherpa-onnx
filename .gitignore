@@ -1,4 +1,7 @@
 build
+.venv/
+*.py[cod]
+uv-cache/
 *.zip
 *.tgz
 *.sw?

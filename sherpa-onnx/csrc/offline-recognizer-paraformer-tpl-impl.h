@@ -13,6 +13,7 @@
 #include "sherpa-onnx/csrc/offline-model-config.h"
 #include "sherpa-onnx/csrc/offline-recognizer-impl.h"
 #include "sherpa-onnx/csrc/offline-recognizer.h"
+#include "sherpa-onnx/csrc/profiling.h"
 #include "sherpa-onnx/csrc/symbol-table.h"
 
 namespace sherpa_onnx {
@@ -76,14 +77,20 @@ class OfflineRecognizerParaformerTplImpl : public OfflineRecognizerImpl {
   }
 
   void DecodeOneStream(OfflineStream *s) const {
+    SHERPA_ONNX_PROFILE_SCOPE("offline.paraformer.decode_stream_total");
     std::vector<float> f = s->GetFrames();
 
-    std::vector<float> logits = model_->Run(std::move(f));
+    std::vector<float> logits;
+    {
+      SHERPA_ONNX_PROFILE_SCOPE("offline.paraformer.model_forward");
+      logits = model_->Run(std::move(f));
+    }
     if (logits.empty()) {
       SHERPA_ONNX_LOGE("No speech detected");
       return;
     }
 
+    SHERPA_ONNX_PROFILE_SCOPE("offline.paraformer.greedy_decode_postprocess");
     int32_t vocab_size = model_->VocabSize();
     int32_t num_tokens = logits.size() / vocab_size;
 

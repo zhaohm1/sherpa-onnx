@@ -91,6 +91,16 @@ target_link_libraries(nemo-ctc-cxx-api sherpa-onnx-cxx-api)
 add_executable(paraformer-cxx-api ./paraformer-cxx-api.cc)
 target_link_libraries(paraformer-cxx-api sherpa-onnx-cxx-api)
 
+add_executable(profile-offline-paraformer-rknn-cxx-api
+               ./profile-offline-paraformer-rknn-cxx-api.cc)
+target_link_libraries(profile-offline-paraformer-rknn-cxx-api
+                      sherpa-onnx-cxx-api)
+
+add_executable(profile-online-zipformer-rknn-cxx-api
+               ./profile-online-zipformer-rknn-cxx-api.cc)
+target_link_libraries(profile-online-zipformer-rknn-cxx-api
+                      sherpa-onnx-cxx-api)
+
 add_executable(streaming-paraformer-cxx-api ./streaming-paraformer-cxx-api.cc)
 target_link_libraries(streaming-paraformer-cxx-api sherpa-onnx-cxx-api)
 

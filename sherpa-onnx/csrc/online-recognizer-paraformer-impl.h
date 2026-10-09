@@ -19,6 +19,7 @@
 #include "sherpa-onnx/csrc/online-paraformer-model.h"
 #include "sherpa-onnx/csrc/online-recognizer-impl.h"
 #include "sherpa-onnx/csrc/online-recognizer.h"
+#include "sherpa-onnx/csrc/profiling.h"
 #include "sherpa-onnx/csrc/symbol-table.h"
 
 namespace sherpa_onnx {
@@ -235,6 +236,7 @@ class OnlineRecognizerParaformerImpl : public OnlineRecognizerImpl {
   }
 
   void DecodeStream(OnlineStream *s) const {
+    SHERPA_ONNX_PROFILE_SCOPE("online.paraformer.decode_chunk_total");
     const auto num_processed_frames = s->GetNumProcessedFrames();
     int32_t available_frames = s->NumFramesReady() - num_processed_frames;
     bool is_final = s->GetOptionInt("is_final", 0);
@@ -243,6 +245,8 @@ class OnlineRecognizerParaformerImpl : public OnlineRecognizerImpl {
     // read the remaining frames and pad with zeros to chunk_size_.
     bool is_short_final = is_final && available_frames < chunk_size_;
 
+    SHERPA_ONNX_PROFILE_TIMER(preprocess_timer,
+                              "online.paraformer.chunk_preprocess");
     std::vector<float> frames =
         s->GetFrames(num_processed_frames,
                      is_short_final ? available_frames : chunk_size_);
@@ -293,9 +297,12 @@ class OnlineRecognizerParaformerImpl : public OnlineRecognizerImpl {
 
     Ort::Value x_length =
         Ort::Value::CreateTensor(memory_info, &x_len_val, 1, &x_len_shape, 1);
+    preprocess_timer.Stop();
 
     auto encoder_out_vec =
         model_.ForwardEncoder(std::move(x), std::move(x_length));
+
+    SHERPA_ONNX_PROFILE_TIMER(cif_timer, "online.paraformer.cif_and_cache");
 
     // CIF search
     auto &encoder_out = encoder_out_vec[0];
@@ -392,6 +399,7 @@ class OnlineRecognizerParaformerImpl : public OnlineRecognizerImpl {
     Ort::Value acoustic_embedding_length_tensor = Ort::Value::CreateTensor(
         memory_info, &num_tokens, 1, acoustic_embedding_length_shape.data(),
         acoustic_embedding_length_shape.size());
+    cif_timer.Stop();
 
     auto decoder_out_vec = model_.ForwardDecoder(
         std::move(encoder_out), std::move(encoder_out_len),

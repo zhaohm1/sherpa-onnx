@@ -1,0 +1,33 @@
+[project]
+name = "sherpa-onnx-rknn-conversion"
+version = "0.1.0"
+description = "Isolated Python environment for RKNN conversion and model export experiments"
+requires-python = ">=3.10,<3.11"
+dependencies = [
+    "fast-histogram>=0.11",
+    "kaldi-native-fbank==1.22.3",
+    "numpy==1.26.4",
+    "onnx==1.16.2",
+    "onnxruntime==1.18.1",
+    "opencv-python>=4.5.5.64",
+    "protobuf==4.25.4",
+    "psutil>=5.9.0",
+    "ruamel-yaml>=0.17.21",
+    "scipy>=1.9.3",
+    "soundfile>=0.12",
+    "tqdm>=4.64.1",
+]
+
+[project.optional-dependencies]
+checkpoint-export = ["torch==2.4.0+cpu"]
+
+[tool.uv]
+package = false
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
