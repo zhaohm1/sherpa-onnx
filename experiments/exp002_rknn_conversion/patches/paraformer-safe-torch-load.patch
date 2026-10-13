@@ -1,0 +1,7 @@
+--- a/export_encoder_onnx.py
++++ b/export_encoder_onnx.py
+@@
+-    state_dict = torch.load("./model_state_dict.pt", map_location="cpu")
++    state_dict = torch.load(
++        "./model_state_dict.pt", map_location="cpu", weights_only=True
++    )

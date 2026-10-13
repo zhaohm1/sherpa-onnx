@@ -40,7 +40,7 @@
 
 **跨实验结论摘要**
 
-- 暂无。只在实验产生有证据的结论后，于此补充 1–3 句和实验 README 链接。
+- Exp002 已用 `/mnt/e/datasets/AEC-Challenge` 两条语音验证 Paraformer 与 chunk=32 Zipformer 的真实浮点 ONNX 输入采集；6 张量化 RKNN 均通过 Toolkit2 2.4.2a15 主机构建。转换日志仍有 `Unkown op target: 0` 诊断，板端加载、识别质量与性能待验证；详见 [Exp002 校准验证记录](experiments/exp002_rknn_conversion/README.md#2026-10-13-校准框架实音频验证)。
 
 ## 4. 下一步任务
 
@@ -72,8 +72,8 @@
 
 ## 6. 最近一次交接
 
-- **日期**：2026-10-11
-- **已知进展**：Paraformer-large-Chuan 指定 HF revision 已完成 15 秒 ONNX→RKNN 主机转换；Zipformer bilingual zh-en-t checkpoint 的 chunk=32 ONNX 已转为 RK3568 RKNN，并在 Toolkit 模拟器中与 ONNX Runtime 作了合成输入数值对照。板端加载与真实 NPU 执行仍未验证。
-- **本次文档变更**：Zipformer bilingual zh-en-t chunk=32 ONNX 和 Paraformer-large-Chuan 指定 HF revision 均已转换为 RK3568 RKNN；Zipformer 已做 Toolkit 模拟器数值对照。两种模型均尚未在目标 NPU 设备上验证。
-- **下一次工作入口**：将 `experiments/exp002_rknn_conversion/results/rk3568/` 中的模型包和当前 profiling runner 复制到板端；按 `experiments/exp002_rknn_conversion/README.md` 运行转写及板端 profiling，保存完整输出目录，再回填板端 Runtime、驱动、频率/温度和 CSV 证据。
-- **关联实验**：`experiments/exp001_runtime_profiling/README.md`（profiling 入口已实现、待板端采集）；`experiments/exp002_rknn_conversion/README.md`（RKNN 转换产物与主机验证）。
+- **日期**：2026-10-13
+- **已知进展**：原有 float Paraformer/Zipformer RKNN 主机转换证据保留。Exp002 新增通用 WAV→float ONNX 图输入采集，使用两条 AEC-Challenge WAV 得到两模型校准列表，六张 int8 RKNN 均在 Toolkit2 2.4.2a15 主机成功构建。日志仍见 `Unkown op target: 0`；没有板端加载、转写精度或性能结果。
+- **本次文档变更**：补充校准生成框架说明、依赖锁定、真实音频输入采集与六图主机量化构建证据；具体列表行数、模型哈希及失败尝试见 Exp002 README 与 `logs/calibration-framework-validation-2026-10-13/`。
+- **下一次工作入口**：量化测试 NPY/RKNN 文件目前在 `/tmp/exp002-calibration-validation/`，必要时按 Exp002 README 命令重建；将所需 RKNN 模型和 profiling runner 复制到 RK3568 板端，验证加载、NPU 实际执行、转写/CER/WER、运行稳定性及设备状态，再回填证据。
+- **关联实验**：`experiments/exp001_runtime_profiling/README.md`（profiling 入口已实现、待板端采集）；`experiments/exp002_rknn_conversion/README.md`（float 与 int8 主机转换、校准数据采集证据）。

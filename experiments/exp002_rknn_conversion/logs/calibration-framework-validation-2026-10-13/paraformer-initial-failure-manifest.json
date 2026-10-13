@@ -1,0 +1,42 @@
+{
+  "framework": "Exp002 float-ONNX real-input calibration capture",
+  "model_type": "paraformer",
+  "sample_rate_hz": 16000,
+  "preprocessing_and_chain": "mono mean; polyphase resample 16 kHz; PCM-scale samples by 32768; KaldiNativeFbank 80 bins, dither=0, snip_edges=True, hamming window, high_freq=0; centered 7-frame/6-shift LFR with edge replication; fixed ONNX length by crop/repeat-last-frame padding; float ONNX encoder (CMVN inside graph)->predictor->CIF->decoder",
+  "models": {
+    "encoder": {
+      "path": "/home/zhaohm/sherpa-onnx/experiments/exp002_rknn_conversion/work/paraformer/encoder-15-seconds.onnx",
+      "sha256": "6939d669eec458713c10571538ef5f15a1594478a1139d6392353b1da0b10def"
+    },
+    "predictor": {
+      "path": "/home/zhaohm/sherpa-onnx/experiments/exp002_rknn_conversion/work/paraformer/predictor-15-seconds.onnx",
+      "sha256": "c3ebe70bef27d927654a5c40a9e2f44d7ee58c6e685ba2c78de50c7d7d02890b"
+    },
+    "decoder": {
+      "path": "/home/zhaohm/sherpa-onnx/experiments/exp002_rknn_conversion/work/paraformer/decoder-15-seconds.onnx",
+      "sha256": "c5814749118ba6600910c2ff1f5100b479bf5462958e4ef69a23063334e5a5f5"
+    }
+  },
+  "counts": {
+    "wav_files": 2,
+    "prepared_wavs": 0,
+    "failed_wavs": 2
+  },
+  "calibration_lists": {
+    "encoder": "/tmp/exp002-calibration-validation/paraformer/lists/encoder.txt",
+    "predictor": "/tmp/exp002-calibration-validation/paraformer/lists/predictor.txt",
+    "decoder": "/tmp/exp002-calibration-validation/paraformer/lists/decoder.txt"
+  },
+  "samples": [],
+  "tensor_files": [],
+  "failures": [
+    {
+      "wav": "/mnt/e/datasets/AEC-Challenge/baseline/icassp2021/clean/0YP1nl3pDk6paW0ZYAPdpg_farend_singletalk.wav",
+      "error": "TypeError: 'onnxruntime.capi.onnxruntime_pybind11_state.NodeArg' object is not subscriptable"
+    },
+    {
+      "wav": "/mnt/e/datasets/AEC-Challenge/baseline/icassp2021/clean/1EbxxdNtTU6sfStbSi-xbA_doubletalk.wav",
+      "error": "TypeError: 'onnxruntime.capi.onnxruntime_pybind11_state.NodeArg' object is not subscriptable"
+    }
+  ]
+}
