@@ -1,0 +1,189 @@
+{
+  "framework": "Exp002 float-ONNX real-input calibration capture",
+  "model_type": "paraformer",
+  "sample_rate_hz": 16000,
+  "preprocessing_and_chain": "mono mean; polyphase resample 16 kHz; PCM-scale samples by 32768; KaldiNativeFbank 80 bins, dither=0, snip_edges=True, hamming window, high_freq=0; centered 7-frame/6-shift LFR with edge replication; fixed ONNX length by crop/repeat-last-frame padding; float ONNX encoder (CMVN inside graph)->predictor->CIF->decoder",
+  "models": {
+    "encoder": {
+      "path": "/home/zhaohm/sherpa-onnx/experiments/exp002_rknn_conversion/work/paraformer/encoder-15-seconds.onnx",
+      "sha256": "6939d669eec458713c10571538ef5f15a1594478a1139d6392353b1da0b10def"
+    },
+    "predictor": {
+      "path": "/home/zhaohm/sherpa-onnx/experiments/exp002_rknn_conversion/work/paraformer/predictor-15-seconds.onnx",
+      "sha256": "c3ebe70bef27d927654a5c40a9e2f44d7ee58c6e685ba2c78de50c7d7d02890b"
+    },
+    "decoder": {
+      "path": "/home/zhaohm/sherpa-onnx/experiments/exp002_rknn_conversion/work/paraformer/decoder-15-seconds.onnx",
+      "sha256": "c5814749118ba6600910c2ff1f5100b479bf5462958e4ef69a23063334e5a5f5"
+    }
+  },
+  "counts": {
+    "wav_files": 2,
+    "prepared_wavs": 2,
+    "failed_wavs": 0
+  },
+  "calibration_lists": {
+    "encoder": "/tmp/exp002-calibration-validation/paraformer-retry/lists/encoder.txt",
+    "predictor": "/tmp/exp002-calibration-validation/paraformer-retry/lists/predictor.txt",
+    "decoder": "/tmp/exp002-calibration-validation/paraformer-retry/lists/decoder.txt"
+  },
+  "samples": [
+    {
+      "id": "00000_sample_a",
+      "wav": "/mnt/e/datasets/AEC-Challenge/baseline/icassp2021/clean/0YP1nl3pDk6paW0ZYAPdpg_farend_singletalk.wav",
+      "wav_sha256": "9b10bb150d7451a12a531af3a4f0ab0d32a3163e4128a7208490cbd68a507fcc",
+      "duration_seconds": 10.43,
+      "source_sample_rate": 16000,
+      "lfr_frames_before_fixed_shape": 174,
+      "decoder_valid_embedding_count": 4,
+      "graph_invocations": {
+        "encoder": 1,
+        "predictor": 1,
+        "decoder": 1
+      }
+    },
+    {
+      "id": "00001_sample_b",
+      "wav": "/mnt/e/datasets/AEC-Challenge/baseline/icassp2021/clean/1EbxxdNtTU6sfStbSi-xbA_doubletalk.wav",
+      "wav_sha256": "8b421076d57a80e1b799cd0c7e0d9e2232e0640211115fcfec160503225273a4",
+      "duration_seconds": 11.35,
+      "source_sample_rate": 16000,
+      "lfr_frames_before_fixed_shape": 189,
+      "decoder_valid_embedding_count": 103,
+      "graph_invocations": {
+        "encoder": 1,
+        "predictor": 1,
+        "decoder": 1
+      }
+    }
+  ],
+  "tensor_files": [
+    {
+      "sample_id": "00000_sample_a",
+      "component": "encoder",
+      "input_index": 0,
+      "path": "/tmp/exp002-calibration-validation/paraformer-retry/00000_sample_a_encoder_input0.npy",
+      "shape": [
+        1,
+        250,
+        560
+      ],
+      "dtype": "float32",
+      "sha256": "c4a89180c7a3a91c06bd29b7634ab532bb7d2a906b9f6c9bb391c1303cdfaffb"
+    },
+    {
+      "sample_id": "00000_sample_a",
+      "component": "predictor",
+      "input_index": 0,
+      "path": "/tmp/exp002-calibration-validation/paraformer-retry/00000_sample_a_predictor_input0.npy",
+      "shape": [
+        1,
+        250,
+        512
+      ],
+      "dtype": "float32",
+      "sha256": "6d5a893ce5e90e15d48de0b179accb7097c0c634f3276a17249291e339692130"
+    },
+    {
+      "sample_id": "00000_sample_a",
+      "component": "decoder",
+      "input_index": 0,
+      "path": "/tmp/exp002-calibration-validation/paraformer-retry/00000_sample_a_decoder_input0.npy",
+      "shape": [
+        1,
+        250,
+        512
+      ],
+      "dtype": "float32",
+      "sha256": "6d5a893ce5e90e15d48de0b179accb7097c0c634f3276a17249291e339692130"
+    },
+    {
+      "sample_id": "00000_sample_a",
+      "component": "decoder",
+      "input_index": 1,
+      "path": "/tmp/exp002-calibration-validation/paraformer-retry/00000_sample_a_decoder_input1.npy",
+      "shape": [
+        1,
+        250,
+        512
+      ],
+      "dtype": "float32",
+      "sha256": "20999f4fc3ada990af2db99b7c5377d821f6a358782aabf6575672f867902f0c"
+    },
+    {
+      "sample_id": "00000_sample_a",
+      "component": "decoder",
+      "input_index": 2,
+      "path": "/tmp/exp002-calibration-validation/paraformer-retry/00000_sample_a_decoder_input2.npy",
+      "shape": [
+        250
+      ],
+      "dtype": "float32",
+      "sha256": "8652c42acde7b8fbbeda7b449648e565c95611eced752c903d056f432cc28064"
+    },
+    {
+      "sample_id": "00001_sample_b",
+      "component": "encoder",
+      "input_index": 0,
+      "path": "/tmp/exp002-calibration-validation/paraformer-retry/00001_sample_b_encoder_input0.npy",
+      "shape": [
+        1,
+        250,
+        560
+      ],
+      "dtype": "float32",
+      "sha256": "6ce1d7816398b22f34e9eee088b5a387d09b06b5b2a33915374ec9dfeaa56753"
+    },
+    {
+      "sample_id": "00001_sample_b",
+      "component": "predictor",
+      "input_index": 0,
+      "path": "/tmp/exp002-calibration-validation/paraformer-retry/00001_sample_b_predictor_input0.npy",
+      "shape": [
+        1,
+        250,
+        512
+      ],
+      "dtype": "float32",
+      "sha256": "faf309b4faf51ad214e9198a865daf8aa290831768f7d7f81e153e619cf3dbbc"
+    },
+    {
+      "sample_id": "00001_sample_b",
+      "component": "decoder",
+      "input_index": 0,
+      "path": "/tmp/exp002-calibration-validation/paraformer-retry/00001_sample_b_decoder_input0.npy",
+      "shape": [
+        1,
+        250,
+        512
+      ],
+      "dtype": "float32",
+      "sha256": "faf309b4faf51ad214e9198a865daf8aa290831768f7d7f81e153e619cf3dbbc"
+    },
+    {
+      "sample_id": "00001_sample_b",
+      "component": "decoder",
+      "input_index": 1,
+      "path": "/tmp/exp002-calibration-validation/paraformer-retry/00001_sample_b_decoder_input1.npy",
+      "shape": [
+        1,
+        250,
+        512
+      ],
+      "dtype": "float32",
+      "sha256": "5ce955d43ba3677e24b24ea16e789292d5e69ff643b889489447a46570e30755"
+    },
+    {
+      "sample_id": "00001_sample_b",
+      "component": "decoder",
+      "input_index": 2,
+      "path": "/tmp/exp002-calibration-validation/paraformer-retry/00001_sample_b_decoder_input2.npy",
+      "shape": [
+        250
+      ],
+      "dtype": "float32",
+      "sha256": "c9848e7f29e1d9bb08e2a6e924216accbd4a978bf07b043a35fa6561639f3b89"
+    }
+  ],
+  "failures": []
+}

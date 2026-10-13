@@ -1,0 +1,4 @@
+adcb3d064310f4e2b3be83e6e6b7e70668c55e06c7caebd9fa9c3c8793dff226  experiments/exp002_rknn_conversion/results/rk3568/paraformer-15s/sherpa-onnx-rk3568-15-seconds-paraformer-zh-2025-10-07/decoder.rknn
+37bf53424bf88f3180915f4a80f7282d434c0ccc4acdf7ec9923fc5e01b8a389  experiments/exp002_rknn_conversion/results/rk3568/paraformer-15s/sherpa-onnx-rk3568-15-seconds-paraformer-zh-2025-10-07/encoder.rknn
+723ae60489e2e7824ce81981aa4e9c8035247ee4a57510f0162f1290a3d47193  experiments/exp002_rknn_conversion/results/rk3568/paraformer-15s/sherpa-onnx-rk3568-15-seconds-paraformer-zh-2025-10-07/predictor.rknn
+59aba8873a2ed1e122c25fee421e25f283b63290efbde85c1f01a853d83cb6e6  experiments/exp002_rknn_conversion/results/rk3568/paraformer-15s/sherpa-onnx-rk3568-15-seconds-paraformer-zh-2025-10-07/tokens.txt
