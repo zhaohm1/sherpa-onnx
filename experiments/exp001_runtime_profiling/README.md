@@ -1,6 +1,6 @@
 # Exp001：端到端与模块级 Profiling
 
-状态：**进行中**。Profiling 入口、两种 RK3568 RKNN 模型包和面向无网络设备的 C++ 测试程序已准备；固定测试音频与 RKNN 产物尚未在目标板上运行，因此没有板端识别或性能结果。
+状态：**进行中**。Profiling 入口和两种 RKNN 测试程序已准备；已收到目标设备运行的 Paraformer 与 Zipformer profiling 汇总（各 2 次 warm-up、20 次测量），原始报告已归档。设备系统信息为 Linaro ALIP / Linux 5.10.209 / aarch64 GNU/Linux；具体 SoC、RKNN Runtime/驱动版本及 NPU 硬件执行证据仍待补齐，识别准确率也尚未评估。
 
 ## 目的与假设
 
@@ -128,7 +128,7 @@ experiments/exp001_runtime_profiling/collect_device_info.sh \
 
 - sherpa-onnx 仓库 commit：`9db1af1871ed78cee9357c23898e5a7d8702d21a`。
 - 仓库自带 API 示例为 `python-api-examples/online-decode-files.py`；本实现复用其 `OnlineRecognizer.from_paraformer`、`from_transducer` 及 `create_stream` / `accept_waveform` / `is_ready` / `decode_streams` / `get_result` 公共调用路径，不修改上游 runtime。
-- 当前主机：WSL2 Linux x86_64；CPython 3.10.20 和 uv 0.11.15 可用。NPU 板端、驱动、RKNN Runtime、CPU governor/频率、温度、电源和功耗均未测。
+- 当前主机：WSL2 Linux x86_64；CPython 3.10.20 和 uv 0.11.15 可用。用户提供的目标设备信息：Linaro ALIP、Linux 5.10.209、aarch64 GNU/Linux。具体 SoC/板卡、RKNN 驱动与 Runtime 版本、CPU governor/频率、温度、电源和功耗尚未记录。
 - Python 依赖：NumPy、与当前模型版本兼容的 `sherpa-onnx` Python package；请在隔离环境安装，不向系统 Python 添加依赖。
 
 ### RKNN 转换环境（本次补充）
@@ -188,6 +188,24 @@ python experiments/exp001_runtime_profiling/profile_online.py \
 
 运行时将拒绝缺失模型或音频文件。请分别固定模型文件、WAV 清单、线程、provider、解码参数、chunk、warm-up 和重复次数；改变其中一个主要变量时写入独立输出目录。
 
+## 目标设备运行结果（2026-10-13）
+
+原始汇总文件：[Profil.md](results/board-run-2026-10-13/Profil.md)，SHA-256：`b9502850710903f280e602c9470bc0485fd818c8937e42b2a1692e1ec5feff8b`。该文件由用户提供，包含两种模型各 20 次测量、模块计时表和逐次转写结果。运行参数记录为 2 次 warm-up、20 次 repeat、1 线程；音频时长 10.76456 秒。
+
+| 模型 | 初始化 | 平均 E2E | p50 E2E | p95 E2E | 最大 E2E | 平均 RTF | 峰值 RSS | 重复文本 |
+|---|---:|---:|---:|---:|---:|---:|---:|---|
+| Offline Paraformer | 3.000842 s | 2.956278 s | 2.952510 s | 2.994025 s | 2.997028 s | 0.274631 | 916.6914 MB | 一致 |
+| Online Zipformer | 0.664195 s | 2.879058 s | 2.877474 s | 3.010760 s | 3.020688 s | 约 0.267 | 163.2891 MB | 一致 |
+
+- 两者处理这段 10.76 秒音频均快于实时播放速度。Zipformer 平均 E2E 比 Paraformer 短约 77 ms（约 2.7%）；这只是当前不同模型/调用路径的单音频观察，不能作为模型或后端优劣的通用结论。
+- Paraformer 模块均值中，RKNN encoder 总耗时约 1.912 s，decoder 约 0.960 s；主要热点在 encoder。Zipformer 每次 decode chunk 平均约 82.3 ms，其中 encoder 总耗时约 67.1 ms；这些是应用及 RKNN API 调用层计时，不是硬件算子时延。
+- Profiling 的分位数列是 log2 纳秒直方图桶上界，精度较粗；端到端 p50/p95 应以逐次测量汇总表为准。父子模块计时存在嵌套，不得直接求和。
+- 报告的 `text_consistent` 只表示同一模型重复运行的输出一致。转写文本在原始 Markdown 中呈现为编码乱码；逆向解码能恢复可读中文，但没有参考文本，不能据此判断 CER/WER 或识别准确率。
+- 板端系统信息目前只有 `Linaro ALIP / Linux 5.10.209 / aarch64 GNU/Linux`。原始报告未包含 SoC/板卡型号、RKNN Runtime/驱动版本、设备温度/频率或 NPU 负载；`rknn.*` 模块名称表明走了 RKNN 调用路径，但不足以独立证明 NPU 硬件执行。具体设备与 runtime 信息见 `collect_device_info.sh` 的采集项。
+- Zipformer 的首个非空结果延迟是在 runner 快速分块喂入完整 WAV 时测得，输入未按实时播放节奏等待，不能视为实时麦克风的首字延迟。
+
+此结果可作为设备侧初步性能记录；补齐硬件/runtime 身份、实际 NPU 执行证据、标签集和 CER/WER 后，再形成正式性能与正确性基线。
+
 ## 检查项与结果
 
 | 检查项 | 结果 |
@@ -196,12 +214,12 @@ python experiments/exp001_runtime_profiling/profile_online.py \
 | 隔离依赖同步 | 通过：Python 3.10.20；基础依赖与 `checkpoint-export` extra 均由锁文件同步 |
 | Toolkit2 wheel 安装与导入 | 通过：2.4.2a15 安装，`import rknn` 与 `from rknn.api import RKNN` 均成功 |
 | Python 源码语法编译 | 通过：`py_compile` 写入 `/tmp/exp001_profile_online.pyc` |
-| 固定 WAV 转写/重复结果一致性 | 未执行：固定 WAV 和目标模型尚未放入实验输入 |
+| 设备侧固定 WAV 重复运行 | 已报告：Paraformer 与 Zipformer 各 20 次；同模型重复文本一致，原始汇总见 `results/board-run-2026-10-13/Profil.md` |
 | Paraformer CPU E2E/模块聚合计时 | 未执行：模型产物与 sherpa-onnx Python runtime 尚未准备 |
 | Zipformer-RNNT CPU E2E/模块聚合计时 | 未执行：checkpoint/export 映射与模型产物待核实 |
 | C++ RKNN runner 源码语法检查 | 通过：两个 runner 通过 `c++ -std=c++17 -I. -fsyntax-only`；两个 shell 脚本通过 `bash -n` |
 | RKNN-enabled CMake 构建 | 未执行：需在有 RKNN headers/runtime 的目标构建环境验证 |
-| RK3568/NPU E2E 与实际 NPU 调用确认 | 未执行：本轮无法连接目标 NPU |
+| 目标设备 E2E/module profiling | 已收到报告：各 20 次测量；系统为 Linaro ALIP / Linux 5.10.209 / aarch64；SoC、RKNN Runtime/驱动版本及实际 NPU 执行待核验 |
 | CER/WER | 未执行：无固定标签清单 |
 
 ## 结论与限制
@@ -211,14 +229,14 @@ python experiments/exp001_runtime_profiling/profile_online.py \
 - 新增 `sherpa-onnx/csrc/profiling.h`：默认关闭；设置 `SHERPA_ONNX_PROFILE=1` 后以 `std::chrono::steady_clock` 记录调用数、总时长、均值、最大值及 log2 纳秒桶估计的 p50/p95 上界。进程退出时写 CSV；输出路径由 `SHERPA_ONNX_PROFILE_OUTPUT` 指定，未指定则写 `sherpa-onnx-profile.csv`。高频路径用原子累加，不在每次调用时写日志。
 - 覆盖模块：stream waveform/Fbank 输入；在线 Paraformer chunk preprocessing、encoder session、CIF/cache、decoder session；在线 Zipformer batch preparation、encoder/decoder/joiner session 与 greedy/modified-beam search；在线 RKNN Zipformer encoder/decoder/joiner 的 context wait、`rknn_inputs_set`、`rknn_run`、`rknn_outputs_get`；离线 Paraformer RKNN 的 encoder/predictor/acoustic embedding/decoder 与对应 RKNN API 调用。
 - 本地运行示例：`SHERPA_ONNX_PROFILE=1 SHERPA_ONNX_PROFILE_OUTPUT=results/profile.csv ./your_cpp_recognizer <固定参数>`。若应用有 warm-up，在调用 warm-up 后、开始测量前 include `sherpa-onnx/csrc/profiling.h` 并调用 `sherpa_onnx::ResetModuleProfileCounters()`；需确保推理线程空闲。统计覆盖进程中后续的所有线程和 stream。
-- 面向断网 NPU 设备的 runner、构建命令和结果文件说明见上文“RKNN 离线板端测试入口”。本轮仅完成源码语法检查，未用 RKNN 配置实际构建或运行；板端结果待采集。
+- 面向断网 NPU 设备的 runner、构建命令和结果文件说明见上文“RKNN 离线板端测试入口”。现已收到两种模型的设备侧 E2E/module profiling 汇总，原始报告已归档；runner 在目标板的构建过程、具体 SoC/runtime 版本和 NPU 硬件执行证据尚未由本仓库的运行日志独立核验。
 - CSV 阶段相互嵌套：例如 `rknn.zipformer.encoder_total` 包含 context wait 和各 RKNN API 分项，不能把这些行相加。`rknn_run` 与 `rknn_outputs_get` 的时间是应用调用耗时；只有在板端且 Runtime 支持时再另采 `RKNN_QUERY_PERF_RUN/DETAIL`。近似分位数是 log2 桶上界，不等同精确样本分位数。
-- 断网板端 runner 已完成语法检查，但尚未在 RKNN-enabled 配置下构建或运行；当前仍没有 CSV 实测数据。Python 转换环境与 Toolkit2 导入已经核验。修改只覆盖指定 Paraformer/Zipformer 路径，其他 recognizer/backend 未插桩。
+- 断网板端 runner 已完成语法检查；现已收到 Paraformer 与 Zipformer 的设备侧 profiling 汇总，但本次报告不含原始机器 CSV、构建日志和 Runtime/驱动身份，仍需补齐这些证据。Python 转换环境与 Toolkit2 导入已经核验。修改只覆盖指定 Paraformer/Zipformer 路径，其他 recognizer/backend 未插桩。
 
-目前完成的是 Python 和 C++ profiling 入口/插桩及断网板端测试程序，不是 Exp001 性能验收。高层 API 计时仍提供应用阶段和 decode 总时间；C++ 计时为识别内部模块热点提供额外边界，但尚无实际板端转写或性能结果。
+目前已有设备侧单 WAV 重复运行和模块 profiling 汇总，可作为初步性能记录，但 Exp001 尚未完成正确性/性能验收：缺少带标签测试集、CER/WER、完整设备/RKNN Runtime/驱动信息和独立 NPU 执行证据。
 
 ## 证据与关联提交
 
 - 源码：[profile_online.py](profile_online.py)
-- 结构化运行产物：尚未生成；模型/音频到位后写入本目录的 `results/`。
+- 设备侧汇总报告：`results/board-run-2026-10-13/Profil.md`（原始用户提供文件）；结构化逐次 E2E 与模块 CSV 尚待从设备输出目录补入。
 - 当前仓库提交：`9db1af1871ed78cee9357c23898e5a7d8702d21a`；本次工作尚未提交。

@@ -18,7 +18,7 @@
 | Zipformer-RNNT RKNN 转换 | 已完成（主机转换） | 使用 checkpoint 仓库 chunk=32 ONNX 三件套转换到 RK3568 RKNN；工具模拟器与 ONNX 输出形状及数值接近；板端加载和持续流式运行待验证 |
 | 模型/环境清单 | 进行中 | Python 3.10.20、uv 与 RKNN-Toolkit2 2.4.2a15；两模型 checkpoint/revision、转换产物哈希已记录；Paraformer 权重 SHA 与 HF LFS 元数据一致；板端 Runtime/驱动待实测 |
 | 正确性基线 | 未开始 | 待采集固定测试集上的 CER/WER 及 ONNX/RKNN 差异 |
-| E2E 与模块级 Profiling | 进行中 | Python API 计时入口、C++ 模块插桩、支持 RKNN/ONNX 的固定 WAV runner 和复用 `sherpa-onnx-alsa` 参数的实时 ALSA runner 已实现；新增路径尚未完成构建和板端实测；见 `experiments/exp001_runtime_profiling/README.md` |
+| E2E 与模块级 Profiling | 进行中 | 已收到 Paraformer、Zipformer 各 20 次设备侧测量汇总；报告显示均值 E2E 约 2.96 s / 2.88 s，原始报告和限制见 `experiments/exp001_runtime_profiling/README.md`；设备系统已知为 Linaro ALIP / Linux 5.10.209 / aarch64，SoC、RKNN Runtime/驱动和 NPU 执行证据待补 |
 | NPU 算子级 Profiling | 未开始 | 先确认 RK3568 与 RKNN 工具链支持的采集路径 |
 | CPU/NPU 对比 | 未开始 | 需统一输入、chunk、解码配置及线程等条件 |
 | 混合后端验证 | 未开始 | 必须在瓶颈和调用/同步开销测清后再决定 |
@@ -73,7 +73,7 @@
 ## 6. 最近一次交接
 
 - **日期**：2026-10-13
-- **已知进展**：原有 float Paraformer/Zipformer RKNN 主机转换证据保留。Exp002 新增通用 WAV→float ONNX 图输入采集，使用两条 AEC-Challenge WAV 得到两模型校准列表，六张 int8 RKNN 均在 Toolkit2 2.4.2a15 主机成功构建。日志仍见 `Unkown op target: 0`；没有板端加载、转写精度或性能结果。
-- **本次文档变更**：补充校准生成框架说明、依赖锁定、真实音频输入采集与六图主机量化构建证据；具体列表行数、模型哈希及失败尝试见 Exp002 README 与 `logs/calibration-framework-validation-2026-10-13/`。
-- **下一次工作入口**：量化测试 NPY/RKNN 文件目前在 `/tmp/exp002-calibration-validation/`，必要时按 Exp002 README 命令重建；将所需 RKNN 模型和 profiling runner 复制到 RK3568 板端，验证加载、NPU 实际执行、转写/CER/WER、运行稳定性及设备状态，再回填证据。
-- **关联实验**：`experiments/exp001_runtime_profiling/README.md`（profiling 入口已实现、待板端采集）；`experiments/exp002_rknn_conversion/README.md`（float 与 int8 主机转换、校准数据采集证据）。
+- **已知进展**：Exp001 收到目标设备 Paraformer/Zipformer profiling 汇总（各 2 warm-up、20 次测量），设备报告系统为 Linaro ALIP / Linux 5.10.209 / aarch64；原始汇总已归档。具体 SoC、RKNN Runtime/驱动版本、NPU 硬件执行证据及 CER/WER 待补。Exp002 保留原有 float 模型主机转换证据；新增通用 WAV→float ONNX 图输入采集，使用两条 AEC-Challenge WAV 得到两模型校准列表，六张 int8 RKNN 均在 Toolkit2 2.4.2a15 主机成功构建。日志仍见 `Unkown op target: 0`，板端加载/量化正确性仍待核验。
+- **本次文档变更**：Exp001 新增目标设备系统信息和两模型 profiling 汇总，原始报告归档至 `experiments/exp001_runtime_profiling/results/board-run-2026-10-13/Profil.md`。Exp002 校准生成框架说明、依赖锁定、真实音频输入采集与六图主机量化构建证据仍见 Exp002 README 与 `logs/calibration-framework-validation-2026-10-13/`。
+- **下一次工作入口**：先用 `experiments/exp001_runtime_profiling/collect_device_info.sh` 补采 SoC/板卡、RKNN Runtime/驱动和设备状态，并从板端输出目录补入 runner 构建日志、原始 CSV 与模型/WAV 哈希；随后用带标签音频评估 CER/WER 和实际 NPU 执行。Exp002 量化测试 NPY/RKNN 文件目前在 `/tmp/exp002-calibration-validation/`，必要时按 Exp002 README 命令重建并继续板端校验。
+- **关联实验**：`experiments/exp001_runtime_profiling/README.md`（已归档设备侧初步 profiling 汇总，硬件身份、Runtime/NPU 验证和 CER/WER 待补）；`experiments/exp002_rknn_conversion/README.md`（float 与 int8 主机转换、校准数据采集证据）。
