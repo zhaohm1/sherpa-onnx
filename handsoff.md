@@ -18,7 +18,7 @@
 | Zipformer-RNNT RKNN 转换 | 已完成（主机转换） | 使用 checkpoint 仓库 chunk=32 ONNX 三件套转换到 RK3568 RKNN；工具模拟器与 ONNX 输出形状及数值接近；板端加载和持续流式运行待验证 |
 | 模型/环境清单 | 进行中 | Python 3.10.20、uv 与 RKNN-Toolkit2 2.4.2a15；两模型 checkpoint/revision、转换产物哈希已记录；Paraformer 权重 SHA 与 HF LFS 元数据一致；板端 Runtime/驱动待实测 |
 | 正确性基线 | 未开始 | 待采集固定测试集上的 CER/WER 及 ONNX/RKNN 差异 |
-| E2E 与模块级 Profiling | 进行中 | Python API 计时入口、C++ 模块插桩、支持 RKNN/ONNX 的固定 WAV runner 和复用 `sherpa-onnx-alsa` 参数的实时 ALSA runner 已实现；新增路径尚未完成构建和板端实测；见 `experiments/exp001_runtime_profiling/README.md` |
+| E2E 与模块级 Profiling | 进行中 | Python API 计时入口、C++ 模块插桩、三个通用 profile runner（在线 WAV、离线 WAV、ALSA）已实现；每个 runner 只接收一个输入源，通过 `--profile-streams` 在内部复制输入并 batch decode；构建及板端实测待补，见 `experiments/exp001_runtime_profiling/README.md` |
 | NPU 算子级 Profiling | 未开始 | 先确认 RK3568 与 RKNN 工具链支持的采集路径 |
 | CPU/NPU 对比 | 未开始 | 需统一输入、chunk、解码配置及线程等条件 |
 | 混合后端验证 | 未开始 | 必须在瓶颈和调用/同步开销测清后再决定 |
@@ -47,7 +47,7 @@
 ### P0 — Exp001：端到端与模块级 Profiling
 
 - CPU 公共 API 路径使用 `experiments/exp001_runtime_profiling/profile_online.py`；RKNN 断网板端用 `run_online_zipformer_rknn.sh` 测 online Zipformer，用 `run_offline_paraformer_rknn.sh` 测用户指定的离线 Paraformer-large-Chuan。RKNN 包和配套命令见 `experiments/exp002_rknn_conversion/README.md`。固定 WAV、模型、tokens 和输出目录。
-- 固定 WAV 的板端 C++ runner 记录初始化、E2E/逐次 decode、重复转写一致性、模块 CSV、输入哈希和可读设备信息，并支持 RKNN 或 CPU ONNX provider；实时 ALSA runner 复用 `sherpa-onnx-alsa` 的模型参数与位置设备参数，并记录采集块、首个非空结果、endpoint 及模块 CSV。设备信息采集脚本为 `experiments/exp001_runtime_profiling/collect_device_info.sh`。计时范围与输出文件说明见实验 README。ONNX 新路径尚未完成构建和运行验证。
+- 固定 WAV 通用 runner 复用 `sherpa-onnx`/`sherpa-onnx-offline` recognizer 参数，只接收一个 WAV，并按 `--profile-streams` 内部复制到多路；ALSA runner 复用 `sherpa-onnx-alsa` 参数，只接收一个设备，也按该选项把采集块复制给多个 stream。三个 runner 的计时范围与 CSV 说明见 Exp001 README；新增路径尚未编译或板端验证。
 - 测量逐 chunk 的平均/p50/p95、RTF、峰值内存，并记录设备频率、温度、线程数及 warm-up 设置。
 - **完成条件**：两种模型均有可重复的运行命令、结构化结果、模块耗时表和端到端时延；结果存入 `experiments/exp001_runtime_profiling/README.md`。
 
@@ -72,8 +72,8 @@
 
 ## 6. 最近一次交接
 
-- **日期**：2026-10-11
-- **已知进展**：Paraformer-large-Chuan 指定 HF revision 已完成 15 秒 ONNX→RKNN 主机转换；Zipformer bilingual zh-en-t checkpoint 的 chunk=32 ONNX 已转为 RK3568 RKNN，并在 Toolkit 模拟器中与 ONNX Runtime 作了合成输入数值对照。板端加载与真实 NPU 执行仍未验证。
-- **本次文档变更**：Zipformer bilingual zh-en-t chunk=32 ONNX 和 Paraformer-large-Chuan 指定 HF revision 均已转换为 RK3568 RKNN；Zipformer 已做 Toolkit 模拟器数值对照。两种模型均尚未在目标 NPU 设备上验证。
-- **下一次工作入口**：将 `experiments/exp002_rknn_conversion/results/rk3568/` 中的模型包和当前 profiling runner 复制到板端；按 `experiments/exp002_rknn_conversion/README.md` 运行转写及板端 profiling，保存完整输出目录，再回填板端 Runtime、驱动、频率/温度和 CSV 证据。
+- **日期**：2026-10-16
+- **已知进展**：三个通用 runner 已支持 ONNX/RKNN 配置，且只接收一个 WAV 或 ALSA 设备；通过 `--profile-streams` 在内部将同一输入送入多路。该调整尚未编译或实机验证。
+- **本次文档变更**：Exp001 README 更新单输入、多 stream 命令和 CSV 计时口径。RKNN 转换与 Toolkit 模拟器证据仍见 Exp002 README；均不代表目标 NPU 设备验证。
+- **下一次工作入口**：在具备 ALSA/ONNX Runtime/RKNN 头文件和库的构建环境编译三个 runner；用 `--profile-streams` 验证多路 stream 的 chunk、endpoint、文本与 summary，再在板端收集模型转写、E2E/module CSV、Runtime/驱动和设备状态。
 - **关联实验**：`experiments/exp001_runtime_profiling/README.md`（profiling 入口已实现、待板端采集）；`experiments/exp002_rknn_conversion/README.md`（RKNN 转换产物与主机验证）。

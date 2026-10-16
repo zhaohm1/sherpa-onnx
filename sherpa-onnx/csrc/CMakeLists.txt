@@ -442,8 +442,10 @@ endif()
 
 if(SHERPA_ONNX_ENABLE_BINARY)
   add_executable(sherpa-onnx sherpa-onnx.cc)
+  add_executable(profile-sherpa-onnx profile-sherpa-onnx.cc)
   add_executable(sherpa-onnx-keyword-spotter sherpa-onnx-keyword-spotter.cc)
   add_executable(sherpa-onnx-offline sherpa-onnx-offline.cc)
+  add_executable(profile-sherpa-onnx-offline profile-sherpa-onnx-offline.cc)
   add_executable(sherpa-onnx-offline-audio-tagging sherpa-onnx-offline-audio-tagging.cc)
   add_executable(sherpa-onnx-offline-denoiser sherpa-onnx-offline-denoiser.cc)
   add_executable(sherpa-onnx-offline-language-identification sherpa-onnx-offline-language-identification.cc)
@@ -465,8 +467,10 @@ if(SHERPA_ONNX_ENABLE_BINARY)
 
   set(main_exes
     sherpa-onnx
+    profile-sherpa-onnx
     sherpa-onnx-keyword-spotter
     sherpa-onnx-offline
+    profile-sherpa-onnx-offline
     sherpa-onnx-offline-audio-tagging
     sherpa-onnx-offline-denoiser
     sherpa-onnx-offline-language-identification
@@ -525,6 +529,7 @@ endif()
 
 if(SHERPA_ONNX_HAS_ALSA AND SHERPA_ONNX_ENABLE_BINARY)
   add_executable(sherpa-onnx-alsa sherpa-onnx-alsa.cc alsa.cc)
+  add_executable(profile-sherpa-onnx-alsa profile-online-alsa.cc alsa.cc)
   add_executable(profile-online-alsa profile-online-alsa.cc alsa.cc)
   add_executable(sherpa-onnx-alsa-offline sherpa-onnx-alsa-offline.cc alsa.cc)
   add_executable(sherpa-onnx-alsa-offline-audio-tagging sherpa-onnx-alsa-offline-audio-tagging.cc alsa.cc)
@@ -540,6 +545,7 @@ if(SHERPA_ONNX_HAS_ALSA AND SHERPA_ONNX_ENABLE_BINARY)
 
   set(exes
     sherpa-onnx-alsa
+    profile-sherpa-onnx-alsa
     profile-online-alsa
     sherpa-onnx-alsa-offline
     sherpa-onnx-alsa-offline-speaker-identification
